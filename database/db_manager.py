@@ -38,12 +38,24 @@ class DatabaseManager:
         criteria = criteria or {}
         query = [f'SELECT * FROM {table_name}']
         if criteria:
-            select_criteria = ' AND '.join(f'{field} = ?' for field in criteria)
+            select_criteria ='WHERE ' + ' AND '.join(f'{field} = ?' for field in criteria)
             query.append(select_criteria)
         if order_by_clause:
             order_criteria = f'ORDER BY {order_by_clause}'
             query.append(order_criteria)
         return self._execute(' '.join(query), tuple(criteria.values()))
+
+    def update(self, table_name: str,
+               upd_fields: dict[str, t.Any],
+               criteria: t.Optional[dict[str, t.Any]] = None):
+        criteria = criteria or {}
+        set_criteria = ' AND '.join(f'{field} = ?' for field in upd_fields)
+        query = [f'UPDATE {table_name} SET {set_criteria}']
+        if criteria:
+            update_criteria ='WHERE ' + ' AND '.join(f'{field} = ?' for field in criteria)
+            query.append(update_criteria)
+        self._execute(' '.join(query), (*upd_fields.values(), *criteria.values()))
+
 
     def __del__(self):
         self.connection.close()
