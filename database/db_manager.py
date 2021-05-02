@@ -8,18 +8,27 @@ class DatabaseManager:
         self.connection = get_connection_to_db(db_path)
 
     def _execute(self, sql_statement: str, data: t.Optional[t.Iterable[t.Any]] = None):
+        """
+        Private method is used to execute sql statement and return cursor object
+        """
         with self.connection:
             cursor = self.connection.cursor()
             cursor.execute(sql_statement, data or [])
             return cursor
 
     def create_table(self, table_name: str, fields: dict[str, str]):
+        """
+        Creates new table in database with given fields
+        """
         self._execute(f"""
         CREATE TABLE IF NOT EXISTS {table_name} (
             {', '.join(f'{key} {value}' for key, value in fields.items())})
         """)
 
     def add(self, table_name: str, data: dict[str, t.Any]):
+        """
+        Adds new row in database table
+        """
         placeholders = ', '.join('?' * len(data))
         column_names = ', '.join(data.keys())
         column_values = tuple(data.values())
@@ -28,6 +37,9 @@ class DatabaseManager:
                       column_values)
 
     def delete(self, table_name: str, criteria: dict[str, t.Any]):
+        """
+        Deletes row in database table
+        """
         delete_criteria = ' AND '.join(f'{field} = ?' for field in criteria)
         self._execute(f"""DELETE FROM {table_name} WHERE {delete_criteria}""",
                       tuple(criteria.values()))
@@ -35,6 +47,9 @@ class DatabaseManager:
     def select(self, table_name: str,
                criteria: t.Optional[dict[str, t.Any]] = None,
                order_by_clause: t.Optional[str] = None):
+        """
+        Selects various number of rows from database table rely on criteria parameters
+        """
         criteria = criteria or {}
         query = [f'SELECT * FROM {table_name}']
         if criteria:
@@ -48,6 +63,9 @@ class DatabaseManager:
     def update(self, table_name: str,
                upd_fields: dict[str, t.Any],
                criteria: t.Optional[dict[str, t.Any]] = None):
+        """
+        Updates fields in row from database table
+        """
         criteria = criteria or {}
         set_criteria = ' AND '.join(f'{field} = ?' for field in upd_fields)
         query = [f'UPDATE {table_name} SET {set_criteria}']
@@ -55,7 +73,6 @@ class DatabaseManager:
             update_criteria ='WHERE ' + ' AND '.join(f'{field} = ?' for field in criteria)
             query.append(update_criteria)
         self._execute(' '.join(query), (*upd_fields.values(), *criteria.values()))
-
 
     def __del__(self):
         self.connection.close()
