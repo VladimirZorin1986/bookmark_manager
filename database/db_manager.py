@@ -13,13 +13,13 @@ class DatabaseManager:
             cursor.execute(sql_statement, data or [])
             return cursor
 
-    def create_table(self, table_name, fields):
+    def create_table(self, table_name: str, fields: dict[str, str]):
         self._execute(f"""
         CREATE TABLE IF NOT EXISTS {table_name} (
             {', '.join(f'{key} {value}' for key, value in fields.items())})
         """)
 
-    def add(self, table_name, data):
+    def add(self, table_name: str, data: dict[str, t.Any]):
         placeholders = ', '.join('?' * len(data))
         column_names = ', '.join(data.keys())
         column_values = tuple(data.values())
@@ -27,10 +27,23 @@ class DatabaseManager:
                           VALUES ({placeholders})""",
                       column_values)
 
-    def delete(self, table_name, criteria):
-        delete_criteria = ' AND '.join(f'{key}=?' for key in criteria.keys())
+    def delete(self, table_name: str, criteria: dict[str, t.Any]):
+        delete_criteria = ' AND '.join(f'{field} = ?' for field in criteria)
         self._execute(f"""DELETE FROM {table_name} WHERE {delete_criteria}""",
                       tuple(criteria.values()))
+
+    def select(self, table_name: str,
+               criteria: t.Optional[dict[str, t.Any]] = None,
+               order_by_clause: t.Optional[str] = None):
+        criteria = criteria or {}
+        query = [f'SELECT * FROM {table_name}']
+        if criteria:
+            select_criteria = ' AND '.join(f'{field} = ?' for field in criteria)
+            query.append(select_criteria)
+        if order_by_clause:
+            order_criteria = f'ORDER BY {order_by_clause}'
+            query.append(order_criteria)
+        return self._execute(' '.join(query), tuple(criteria.values()))
 
     def __del__(self):
         self.connection.close()
