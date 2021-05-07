@@ -1,5 +1,5 @@
 import typing as t
-from db_utils import get_connection_to_db
+from .db_utils import get_connection_to_db
 
 
 class DatabaseManager:
