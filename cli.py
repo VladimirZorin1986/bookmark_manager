@@ -1,12 +1,33 @@
+import os
+import typing as t
 import commands
 from option import Option
 
 
+def get_user_input(label: str, required=True) -> t.Optional[str]:
+    value = input(f'{label}: ') or None
+    while required and not value:
+        value = input(f'{label}: ') or None
+    return value
+
+
+def get_new_bookmark_data() -> dict[str, t.Optional[str]]:
+    return {
+        'title': get_user_input('Title'),
+        'url': get_user_input('URL'),
+        'notes': get_user_input('Notes', required=False)
+    }
+
+
+def get_bookmark_id_for_deletion() -> int:
+    return int(get_user_input('Enter a bookmark ID to delete'))
+
+
 OPTIONS = {
-    'A': Option('Add bookmark', commands.AddBookmarkCommand()),
+    'A': Option('Add bookmark', commands.AddBookmarkCommand(), prep_call=get_new_bookmark_data),
     'B': Option('List bookmarks by date', commands.ListBookmarksCommand()),
     'T': Option('List bookmarks by title', commands.ListBookmarksCommand(order_by='title')),
-    'D': Option('Delete bookmark', commands.DeleteBookmarkCommand()),
+    'D': Option('Delete bookmark', commands.DeleteBookmarkCommand(), prep_call=get_bookmark_id_for_deletion),
     'Q': Option('Quit', commands.QuitCommand())
 }
 
@@ -23,11 +44,25 @@ def get_option_choice() -> Option:
     return OPTIONS.get(choice)
 
 
-if __name__ == '__main__':
-    commands.CreateBookmarksTableCommand().execute()
+def clear_screen():
+    clear = 'cls' if os.name == 'nt' else 'clear'
+    os.system(clear)
+
+
+def loop():
+    clear_screen()
     print_options(OPTIONS)
     chosen_option = get_option_choice()
-    print(chosen_option.choose())
+    chosen_option.choose()
+    _ = input('Click Enter to return to main menu...')
+
+
+if __name__ == '__main__':
+    commands.CreateBookmarksTableCommand().execute()
+
+    while True:
+        loop()
+
 
 
 
