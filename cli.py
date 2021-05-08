@@ -11,6 +11,10 @@ def get_user_input(label: str, required=True) -> t.Optional[str]:
     return value
 
 
+def convert_input_to_bool(inp):
+    return inp.lower() == 'y'
+
+
 def get_new_bookmark_data() -> dict[str, t.Optional[str]]:
     return {
         'title': get_user_input('Title'),
@@ -23,11 +27,19 @@ def get_bookmark_id_for_deletion() -> int:
     return int(get_user_input('Enter a bookmark ID to delete'))
 
 
+def get_github_stars_info():
+    return {
+        'username': get_user_input('Github username'),
+        'is_save_timestamp': convert_input_to_bool(get_user_input('Save original timestamp [Y/N]: '))
+    }
+
+
 OPTIONS = {
     'A': Option('Add bookmark', commands.AddBookmarkCommand(), prep_call=get_new_bookmark_data),
     'B': Option('List bookmarks by date', commands.ListBookmarksCommand()),
     'T': Option('List bookmarks by title', commands.ListBookmarksCommand(order_by='title')),
     'D': Option('Delete bookmark', commands.DeleteBookmarkCommand(), prep_call=get_bookmark_id_for_deletion),
+    'G': Option('Import Github stars', commands.ImportGithubStarsCommand(), prep_call=get_github_stars_info),
     'Q': Option('Quit', commands.QuitCommand())
 }
 
@@ -39,7 +51,7 @@ def print_options(options: dict[str, Option]) -> None:
 
 
 def get_option_choice() -> Option:
-    while (choice := input().upper()) not in OPTIONS:
+    while (choice := input('Choose option: ').upper()) not in OPTIONS:
         print('Invalid choice. Try again...')
     return OPTIONS.get(choice)
 
